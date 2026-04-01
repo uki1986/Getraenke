@@ -7,50 +7,34 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Getränke">
 <title>Getränkezähler Pro</title>
-<link rel="manifest" href="manifest.json">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;9..144,700;9..144,900&display=swap');
-
-/* THEME */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,700&display=swap');
 :root{--bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1c;--border:#242424;--border2:#2e2e2e;--text:#f2ede7;--muted:#555;--muted2:#888;--green:#2ecc71;--red:#e05c5c;--gold:#d4a017;--radius:18px;--tab-h:68px;}
 [data-theme="light"]{--bg:#f5f0ea;--surface:#ffffff;--surface2:#f0ebe4;--border:#e0d9d0;--border2:#ccc5bb;--text:#1a1612;--muted:#aaa;--muted2:#888;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overscroll-behavior:none;transition:background 0.3s,color 0.3s;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overscroll-behavior:none;}
 body{display:flex;flex-direction:column;height:100dvh;}
-
-/* VIEWS */
 .view{display:none;flex-direction:column;flex:1;overflow:hidden;}
 .view.active{display:flex;}
-
-/* HEADER */
 .app-header{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px;padding-top:max(14px,env(safe-area-inset-top,14px));border-bottom:1px solid var(--border);background:var(--surface);}
 .app-title{font-family:'Fraunces',serif;font-size:20px;font-weight:900;letter-spacing:-0.3px;}
 .app-title em{font-style:normal;opacity:0.35;}
 .header-right{display:flex;align-items:center;gap:10px;}
 .theme-btn{background:none;border:1px solid var(--border2);border-radius:10px;padding:5px 9px;font-size:14px;cursor:pointer;color:var(--text);}
-.theme-btn:active{border-color:var(--text);}
 .header-session{font-size:10px;color:var(--muted2);text-align:right;letter-spacing:0.04em;}
 .header-session strong{display:block;font-size:12px;color:var(--text);}
-
-/* TAB BAR */
 .tab-bar{flex-shrink:0;display:flex;background:var(--surface);border-top:1px solid var(--border);height:var(--tab-h);padding-bottom:env(safe-area-inset-bottom,0px);}
 .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;transition:color 0.15s;}
 .tab-btn .ti{font-size:19px;line-height:1;}
 .tab-btn.active{color:var(--text);}
-
-/* SCROLL CONTENT */
 .scroll{overflow-y:auto;flex:1;}
 .pad{padding:14px 14px 20px;}
-
-/* SESSION BANNER */
-.sess-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sess-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;justify-content:space-between;margin-bottom:12px;}
 .sess-name{font-family:'Fraunces',serif;font-size:17px;font-weight:700;}
 .sess-sub{font-size:10px;color:var(--muted2);margin-top:3px;letter-spacing:0.04em;}
 .sess-total-num{font-family:'Fraunces',serif;font-size:38px;font-weight:900;line-height:1;text-align:right;}
 .sess-total-price{font-size:11px;color:var(--gold);text-align:right;margin-top:2px;letter-spacing:0.04em;}
 .sess-total-lbl{font-size:9px;color:var(--muted2);text-align:right;text-transform:uppercase;letter-spacing:0.08em;}
-
-/* CARDS GRID */
 .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .drink-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 13px 11px;display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden;transition:border-color 0.2s,opacity 0.2s;}
 .drink-card.disabled{opacity:0.28;pointer-events:none;}
@@ -63,13 +47,11 @@ body{display:flex;flex-direction:column;height:100dvh;}
 .dc-count.pop{transform:scale(1.22);}
 .dc-price-total{font-size:10px;color:var(--gold);margin-top:1px;letter-spacing:0.03em;min-height:14px;}
 .dc-btns{display:flex;gap:7px;}
-.dcb{flex:1;height:44px;border:1px solid var(--border2);border-radius:12px;background:var(--bg);color:var(--text);font-size:22px;font-family:'DM Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.08s;user-select:none;-webkit-user-select:none;}
+.dcb{flex:1;height:44px;border:1px solid var(--border2);border-radius:12px;background:var(--bg);color:var(--text);font-size:22px;font-family:'DM Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.08s;user-select:none;}
 .dcb:active{transform:scale(0.9);}
 .dcb-m{color:var(--muted);}
 .dcb-m:active{background:color-mix(in srgb,var(--red) 12%,transparent);border-color:var(--red);color:var(--red);}
 .dcb-p:active{background:color-mix(in srgb,var(--green) 14%,transparent);border-color:var(--green);color:var(--green);}
-
-/* MODALS & ADMIN BUTTONS */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;justify-content:center;}
 .overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border2);border-radius:28px 28px 0 0;padding:24px 20px;width:100%;max-width:480px;padding-bottom:max(24px,env(safe-area-inset-bottom,24px));}
@@ -84,6 +66,11 @@ body{display:flex;flex-direction:column;height:100dvh;}
 .mbtn-danger{background:var(--red);color:white;border-color:var(--red);}
 .modal-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:12px 14px;margin-bottom:6px;}
 .modal-input:focus{outline:none;border-color:var(--text);}
+.adm-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.ainput{padding:6px;border-radius:10px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;flex:1;}
+.adm-del{border:none;background:none;color:var(--red);font-size:16px;cursor:pointer;}
+.add-drink-btn,.save-all-btn{margin-top:10px;padding:12px;border-radius:14px;border:none;font-family:'DM Mono',monospace;font-size:13px;background:var(--green);color:#fff;cursor:pointer;width:100%;}
+.add-drink-btn:hover,.save-all-btn:hover{opacity:0.85;}
 </style>
 </head>
 <body>
@@ -100,8 +87,8 @@ body{display:flex;flex-direction:column;height:100dvh;}
   <div class="scroll"><div class="pad">
     <div class="sess-banner">
       <div>
-        <div class="sess-name" id="c-sess-name">—</div>
-        <div class="sess-sub" id="c-sess-sub">— Noch keine Buchungen</div>
+        <div class="sess-name" id="c-sess-name">Runde 1</div>
+        <div class="sess-sub" id="c-sess-sub">Noch keine Buchungen</div>
       </div>
       <div>
         <div class="sess-total-num" id="c-total">0</div>
@@ -109,16 +96,20 @@ body{display:flex;flex-direction:column;height:100dvh;}
         <div class="sess-total-lbl">Gesamt</div>
       </div>
     </div>
+    <div style="margin-bottom:10px;">
+      <button onclick="newRound()" style="width:100%;padding:12px;border-radius:14px;background:#e67e22;border:none;color:#fff;font-size:14px;cursor:pointer;">Neue Runde</button>
+      <button onclick="exportCSV()" style="width:100%;padding:12px;border-radius:14px;background:#3498db;border:none;color:#fff;font-size:14px;cursor:pointer;margin-top:6px;">Export</button>
+      <button onclick="undoLast()" style="width:100%;padding:12px;border-radius:14px;background:#e74c3c;border:none;color:#fff;font-size:14px;cursor:pointer;margin-top:6px;">Undo</button>
+    </div>
     <div class="cards-grid" id="cards-grid"></div>
   </div></div>
 </div>
 
 <div class="view" id="view-admin">
   <div class="scroll"><div class="pad">
-    <div class="sec-label">Getränke</div>
     <div id="adm-drinks"></div>
     <button class="add-drink-btn" onclick="addDrink()">＋ Getränk hinzufügen</button>
-    <button class="save-all-btn" onclick="saveAdmin()">Alle Einstellungen speichern</button>
+    <button class="save-all-btn" onclick="saveAdmin()">Speichern</button>
   </div></div>
 </div>
 
@@ -129,13 +120,14 @@ body{display:flex;flex-direction:column;height:100dvh;}
 
 <script>
 /* GLOBALS */
-let drinks = [];
-let session = {name:'Aktuelle Runde', entries:[]};
-let theme = localStorage.getItem('theme') || 'dark';
+let drinks=[],rounds=[],currentRound=0;
+let theme=localStorage.getItem('theme')||'dark';
 document.documentElement.setAttribute('data-theme',theme);
 
 /* TAB */
 function goTab(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+v).classList.add('active');document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.tab-btn[data-v="${v}"]`).classList.add('active');render();}
+
+/* THEME */
 function toggleTheme(){theme=(theme==='dark'?'light':'dark');document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('theme',theme);}
 
 /* ADMIN */
@@ -149,17 +141,30 @@ row.innerHTML=`<input class="ainput emoji" value="${dr.emoji}" onchange="drinks[
 function saveAdmin(){localStorage.setItem('drinks',JSON.stringify(drinks));alert('Getränke gespeichert');render();}
 
 /* COUNTER */
-function render(){const g=document.getElementById('cards-grid');g.innerHTML='';let total=0;drinks.forEach((dr,i)=>{if(!dr.aktiv)return;let count=session.entries.filter(e=>e.drink===i).length;let priceTotal=(count*dr.preis).toFixed(2);total+=parseFloat(priceTotal);
+function render(){const g=document.getElementById('cards-grid');g.innerHTML='';let total=0;const session=rounds[currentRound];drinks.forEach((dr,i)=>{if(!dr.aktiv)return;let count=session.entries.filter(e=>e.drink===i).length;let priceTotal=(count*dr.preis).toFixed(2);total+=parseFloat(priceTotal);
 const card=document.createElement('div');card.className='drink-card';card.innerHTML=`<div class="dc-top"><div class="dc-left"><div class="dc-emoji">${dr.emoji}</div><div class="dc-name">${dr.name}</div></div><div class="dc-right"><div class="dc-count">${count}</div><div class="dc-price-total">${priceTotal} €</div></div></div><div class="dc-btns"><button class="dcb" onclick="addCount(${i})">＋</button><button class="dcb dcb-m" onclick="subCount(${i})">−</button></div>`;g.appendChild(card);});
-document.getElementById('c-total').innerText=session.entries.length;document.getElementById('c-price').innerText=total.toFixed(2)+' €';}
+document.getElementById('c-total').innerText=session.entries.length;document.getElementById('c-price').innerText=total.toFixed(2)+' €';
+document.getElementById('c-sess-name').innerText='Runde '+(currentRound+1);
+document.getElementById('c-sess-sub').innerText=session.entries.length>0?'Buchungen vorhanden':'Noch keine Buchungen';
+}
 
-/* ADD/SUB COUNT */
-function addCount(i){session.entries.push({drink:i,time:new Date()});render();}
-function subCount(i){for(let j=session.entries.length-1;j>=0;j--){if(session.entries[j].drink===i){session.entries.splice(j,1);break;}}render();}
+/* COUNT */
+function addCount(i){rounds[currentRound].entries.push({drink:i,time:new Date()});render();}
+function subCount(i){const session=rounds[currentRound].entries;for(let j=session.length-1;j>=0;j--){if(session[j].drink===i){session.splice(j,1);break;}}render();}
+
+/* NEW ROUND */
+function newRound(){rounds.push({entries:[]});currentRound=rounds.length-1;render();}
+
+/* UNDO */
+function undoLast(){const session=rounds[currentRound].entries;if(session.length>0){session.pop();render();}}
+
+/* EXPORT */
+function exportCSV(){const session=rounds[currentRound];let csv='Getränk,Anzahl,Preis\n';drinks.forEach((dr,i)=>{let count=session.entries.filter(e=>e.drink===i).length;if(count>0){csv+=`${dr.name},${count},${(dr.preis*count).toFixed(2)} €\n`;}});const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='runde'+(currentRound+1)+'.csv';a.click();URL.revokeObjectURL(url);}
 
 /* STORAGE */
-function load(){const s=localStorage.getItem('drinks');if(s)drinks=JSON.parse(s);renderAdmin();render();}
+function load(){const s=localStorage.getItem('drinks');if(s)drinks=JSON.parse(s);if(rounds.length===0)rounds.push({entries:[]});renderAdmin();render();}
 window.onload=load;
 </script>
+
 </body>
 </html>
