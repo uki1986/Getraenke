@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Getränke">
+<title>Getränkezähler Pro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;9..144,700;9..144,900&display=swap');
+
+/* ── THEME ── */
+:root {
+  --bg:#0a0a0a; --surface:#141414; --surface2:#1c1c1c;
+  --border:#242424; --border2:#2e2e2e;
+  --text:#f2ede7; --muted:#555; --muted2:#888;
+  --green:#2ecc71; --red:#e05c5c; --gold:#d4a017;
+  --radius:18px; --tab-h:68px;
+}
+[data-theme="light"] {
+  --bg:#f5f0ea; --surface:#ffffff; --surface2:#f0ebe4;
+  --border:#e0d9d0; --border2:#ccc5bb;
+  --text:#1a1612; --muted:#aaa; --muted2:#888;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;overscroll-behavior:none;transition:background 0.3s,color 0.3s;}
+body{display:flex;flex-direction:column;height:100dvh;}
+
+/* ── VIEWS ── */
+.view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.view.active{display:flex;}
+
+/* ── HEADER ── */
+.app-header{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px 12px;padding-top:max(14px,env(safe-area-inset-top,14px));
+  border-bottom:1px solid var(--border);background:var(--surface);
+}
+.app-title{font-family:'Fraunces',serif;font-size:20px;font-weight:900;letter-spacing:-0.3px;}
+.app-title em{font-style:normal;opacity:0.35;}
+.header-right{display:flex;align-items:center;gap:10px;}
+.theme-btn{background:none;border:1px solid var(--border2);border-radius:10px;padding:5px 9px;font-size:14px;cursor:pointer;color:var(--text);}
+.theme-btn:active{border-color:var(--text);}
+.header-session{font-size:10px;color:var(--muted2);text-align:right;letter-spacing:0.04em;}
+.header-session strong{display:block;font-size:12px;color:var(--text);}
+
+/* ── TAB BAR ── */
+.tab-bar{
+  flex-shrink:0;display:flex;background:var(--surface);border-top:1px solid var(--border);
+  height:var(--tab-h);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;border:none;background:none;
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.07em;transition:color 0.15s;
+}
+.tab-btn .ti{font-size:19px;line-height:1;}
+.tab-btn.active{color:var(--text);}
+
+/* ── SCROLL CONTENT ── */
+.scroll{overflow-y:auto;flex:1;}
+.pad{padding:14px 14px 20px;}
+
+/* ── SECTION LABEL ── */
+.sec-label{font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted2);padding:4px 0 8px;}
+
+/* ── SESSION BANNER ── */
+.sess-banner{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
+}
+.sess-name{font-family:'Fraunces',serif;font-size:17px;font-weight:700;}
+.sess-sub{font-size:10px;color:var(--muted2);margin-top:3px;letter-spacing:0.04em;}
+.sess-total-num{font-family:'Fraunces',serif;font-size:38px;font-weight:900;line-height:1;text-align:right;}
+.sess-total-price{font-size:11px;color:var(--gold);text-align:right;margin-top:2px;letter-spacing:0.04em;}
+.sess-total-lbl{font-size:9px;color:var(--muted2);text-align:right;text-transform:uppercase;letter-spacing:0.08em;}
+
+/* ── CARDS ── */
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.drink-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 13px 11px;display:flex;flex-direction:column;gap:9px;
+  position:relative;overflow:hidden;transition:border-color 0.2s,opacity 0.2s;
+}
+.drink-card.disabled{opacity:0.28;pointer-events:none;}
+.drink-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:var(--cc);border-radius:var(--radius) var(--radius) 0 0;}
+.drink-card.active{border-color:var(--cc);}
+
+.dc-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.dc-left .dc-emoji{font-size:24px;line-height:1;}
+.dc-left .dc-name{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted2);margin-top:3px;}
+.dc-right{text-align:right;}
+.dc-count{font-family:'Fraunces',serif;font-size:38px;font-weight:900;line-height:1;color:var(--cc);transition:transform 0.1s;}
+.dc-count.pop{transform:scale(1.22);}
+.dc-price-total{font-size:10px;color:var(--gold);margin-top:1px;letter-spacing:0.03em;min-height:14px;}
+
+.dc-progress{height:3px;background:var(--border2);border-radius:10px;overflow:hidden;}
+.dc-bar{height:100%;background:var(--cc);border-radius:10px;transition:width 0.35s ease;width:0%;}
+.dc-goal-lbl{font-size:9px;color:var(--muted);text-align:right;margin-top:2px;letter-spacing:0.04em;}
+
+.dc-btns{display:flex;gap:7px;}
+.dcb{
+  flex:1;height:44px;border:1px solid var(--border2);border-radius:12px;
+  background:var(--bg);color:var(--text);font-size:22px;font-family:'DM Mono',monospace;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.08s;user-select:none;-webkit-user-select:none;
+}
+.dcb-m{color:var(--muted);}
+.dcb:active{transform:scale(0.9);}
+.dcb-m:active{background:color-mix(in srgb,var(--red) 12%,transparent);border-color:var(--red);color:var(--red);}
+.dcb-p:active{background:color-mix(in srgb,var(--cc) 14%,transparent);border-color:var(--cc);color:var(--cc);}
+
+/* ── UNDO BAR ── */
+.undo-bar{
+  margin-top:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;display:flex;align-items:center;justify-content:space-between;
+  opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;
+}
+.undo-bar.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.undo-txt{font-size:11px;color:var(--muted2);letter-spacing:0.03em;}
+.undo-btn{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:0.07em;}
+.undo-btn:active{border-color:var(--text);}
+
+/* ── SHARE BUTTONS ── */
+.share-row{display:flex;gap:8px;margin-top:12px;}
+.share-btn{
+  flex:1;padding:11px 8px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;
+  cursor:pointer;text-transform:uppercase;letter-spacing:0.07em;display:flex;flex-direction:column;
+  align-items:center;gap:4px;transition:all 0.12s;
+}
+.share-btn:active{border-color:var(--text);transform:scale(0.97);}
+.share-btn .si{font-size:18px;}
+
+/* ── SESSIONS ── */
+.sess-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
+  transition:border-color 0.15s;
+}
+.sess-item.cur{border-color:var(--gold);}
+.sess-item:active{border-color:var(--border2);}
+.si-name{font-family:'Fraunces',serif;font-size:16px;font-weight:700;}
+.si-meta{font-size:10px;color:var(--muted2);margin-top:2px;letter-spacing:0.03em;}
+.si-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.si-btn{border:1px solid var(--border2);background:none;color:var(--muted2);font-family:'DM Mono',monospace;font-size:9px;padding:4px 10px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em;}
+.si-btn:active{border-color:var(--text);color:var(--text);}
+.si-btn.del:active{border-color:var(--red);color:var(--red);}
+.si-count{font-family:'Fraunces',serif;font-size:28px;font-weight:900;color:var(--gold);text-align:right;}
+.si-price{font-size:10px;color:var(--muted2);text-align:right;letter-spacing:0.03em;}
+.si-lbl{font-size:9px;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:0.07em;}
+
+.new-sess-btn{
+  width:100%;padding:14px;background:none;border:2px dashed var(--border2);border-radius:var(--radius);
+  color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;
+  text-transform:uppercase;letter-spacing:0.1em;transition:all 0.15s;
+}
+.new-sess-btn:active{border-color:var(--text);color:var(--text);}
+
+/* ── LOG ── */
+.log-entry{
+  padding:10px 14px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.log-entry:last-child{border-bottom:none;}
+.le-left{display:flex;align-items:center;gap:10px;}
+.le-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.le-dot.p{background:var(--green);}
+.le-dot.m{background:var(--red);}
+.le-name{font-size:13px;}
+.le-act{font-size:10px;color:var(--muted2);}
+.le-right{text-align:right;}
+.le-time{font-size:10px;color:var(--muted);}
+.le-price{font-size:10px;color:var(--gold);margin-top:1px;}
+.log-empty{padding:48px 16px;text-align:center;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;}
+
+.export-bar{flex-shrink:0;padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--surface);}
+.exp-btn{flex:1;padding:11px;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-transform:uppercase;letter-spacing:0.07em;}
+.exp-btn:active{border-color:var(--text);}
+
+/* ── ADMIN ── */
+.admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.adm-row{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid var(--border);gap:10px;}
+.adm-row:last-child{border-bottom:none;}
+.adm-emoji-big{font-size:24px;flex-shrink:0;width:32px;text-align:center;}
+.adm-fields{flex:1;display:flex;flex-direction:column;gap:6px;}
+.adm-row1{display:flex;gap:6px;align-items:center;}
+.adm-row2{display:flex;gap:6px;align-items:center;}
+.ainput{background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:6px 9px;}
+.ainput:focus{outline:none;border-color:var(--text);}
+.ainput.name{flex:1;}
+.ainput.emoji{width:50px;text-align:center;font-size:16px;}
+.ainput.num{width:70px;text-align:center;}
+.ainput.price{width:80px;}
+.alabel{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;}
+.adm-del{background:none;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:14px;padding:5px 9px;cursor:pointer;flex-shrink:0;}
+.adm-del:active{border-color:var(--red);color:var(--red);}
+
+/* Toggle */
+.tog{position:relative;width:44px;height:26px;flex-shrink:0;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-track{position:absolute;inset:0;background:var(--border2);border-radius:13px;cursor:pointer;transition:background 0.2s;}
+.tog input:checked+.tog-track{background:var(--green);}
+.tog-thumb{position:absolute;width:20px;height:20px;background:white;border-radius:50%;top:3px;left:3px;transition:transform 0.2s;pointer-events:none;}
+.tog input:checked~.tog-thumb{transform:translateX(18px);}
+
+.add-drink-btn{
+  width:100%;padding:13px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);
+  color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;
+  text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;transition:all 0.15s;
+}
+.add-drink-btn:active{border-color:var(--text);color:var(--text);}
+
+.save-all-btn{
+  display:block;width:100%;padding:15px;background:var(--text);color:var(--bg);border:none;
+  border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;
+  text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;margin-bottom:12px;
+  transition:opacity 0.15s;
+}
+.save-all-btn:active{opacity:0.8;}
+
+/* PIN */
+.pin-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.pin-lbl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;}
+.pin-row{display:flex;gap:8px;}
+.pin-field{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:16px;padding:11px;text-align:center;letter-spacing:0.3em;}
+.pin-field:focus{outline:none;border-color:var(--text);}
+.pin-save{padding:11px 16px;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-transform:uppercase;letter-spacing:0.07em;}
+.pin-save:active{border-color:var(--text);}
+
+/* ── MODALS ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:28px 28px 0 0;padding:24px 20px;width:100%;max-width:480px;padding-bottom:max(24px,env(safe-area-inset-bottom,24px));}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px;}
+.modal h2{font-family:'Fraunces',serif;font-size:20px;font-weight:900;margin-bottom:6px;}
+.modal p{font-size:12px;color:var(--muted2);margin-bottom:18px;line-height:1.65;}
+.modal-btns{display:flex;gap:10px;}
+.mbtn{flex:1;padding:14px;border-radius:14px;border:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.12s;}
+.mbtn:active{transform:scale(0.97);}
+.mbtn-cancel{background:var(--bg);color:var(--text);}
+.mbtn-ok{background:var(--text);color:var(--bg);border-color:var(--text);}
+.mbtn-danger{background:var(--red);color:white;border-color:var(--red);}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:12px 14px;margin-bottom:6px;}
+.modal-input:focus{outline:none;border-color:var(--text);}
+
+/* ── PIN LOCK ── */
+.pin-lock{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px 32px;}
+.pin-lock.open{display:flex;}
+.pll-title{font-family:'Fraunces',serif;font-size:26px;font-weight:900;}
+.pll-sub{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;}
+.pin-dots{display:flex;gap:12px;}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--border2);transition:all 0.15s;}
+.pin-dot.on{background:var(--text);border-color:var(--text);}
+.pin-err{color:var(--red);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;height:14px;}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px;}
+.npk{aspect-ratio:1;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.08s;-webkit-user-select:none;}
+.npk:active{background:var(--border2);transform:scale(0.92);}
+.npk.del{font-family:'DM Mono',monospace;font-size:18px;color:var(--muted2);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + var(--tab-h) + 14px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--bg);border-radius:100px;padding:10px 22px;font-size:12px;font-family:'DM Mono',monospace;white-space:nowrap;z-index:600;opacity:0;transition:all 0.25s cubic-bezier(.18,.89,.32,1.28);pointer-events:none;letter-spacing:0.03em;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- PIN LOCK -->
+<div class="pin-lock" id="pin-lock">
+  <div class="pll-title">Admin</div>
+  <div class="pll-sub">PIN eingeben</div>
+  <div class="pin-dots"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
+  <div class="pin-err" id="pin-err"></div>
+  <div class="numpad">
+    <button class="npk" onclick="pk('1')">1</button><button class="npk" onclick="pk('2')">2</button><button class="npk" onclick="pk('3')">3</button>
+    <button class="npk" onclick="pk('4')">4</button><button class="npk" onclick="pk('5')">5</button><button class="npk" onclick="pk('6')">6</button>
+    <button class="npk" onclick="pk('7')">7</button><button class="npk" onclick="pk('8')">8</button><button class="npk" onclick="pk('9')">9</button>
+    <div></div><button class="npk" onclick="pk('0')">0</button><button class="npk del" onclick="pd()">⌫</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-title">Bau<em>wagen</em></div>
+  <div class="header-right">
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+    <div class="header-session"><strong id="hdr-sess">—</strong><span id="hdr-time">—</span></div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: COUNTER ═══ -->
+<div class="view active" id="view-counter">
+  <div class="scroll"><div class="pad">
+    <div class="sess-banner">
+      <div>
+        <div class="sess-name" id="c-sess-name">—</div>
+        <div class="sess-sub" id="c-sess-sub">— Noch keine Buchungen</div>
+      </div>
+      <div>
+        <div class="sess-total-num" id="c-total">0</div>
+        <div class="sess-total-price" id="c-price">0,00 €</div>
+        <div class="sess-total-lbl">Gesamt</div>
+      </div>
+    </div>
+    <div class="cards-grid" id="cards-grid"></div>
+    <div class="undo-bar" id="undo-bar">
+      <span class="undo-txt" id="undo-txt">—</span>
+      <button class="undo-btn" onclick="doUndo()">↩ Rückgängig</button>
+    </div>
+    <div class="share-row">
+      <button class="share-btn" onclick="shareWhatsApp()"><span class="si">💬</span>WhatsApp</button>
+      <button class="share-btn" onclick="shareMessage()"><span class="si">✉️</span>iMessage</button>
+      <button class="share-btn" onclick="openResetModal()"><span class="si">🔄</span>Reset</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ VIEW: SESSIONS ═══ -->
+<div class="view" id="view-sessions">
+  <div class="scroll"><div class="pad">
+    <div class="sec-label">Sessions / Events</div>
+    <div id="sess-list"></div>
+    <button class="new-sess-btn" onclick="openNewSess()">＋ Neue Session erstellen</button>
+  </div></div>
+</div>
+
+<!-- ═══ VIEW: LOG ═══ -->
+<div class="view" id="view-log">
+  <div class="scroll" id="log-scroll">
+    <div id="log-list"></div>
+  </div>
+  <div class="export-bar">
+    <button class="exp-btn" onclick="expTxt()">⬇ TXT</button>
+    <button class="exp-btn" onclick="expCSV()">⬇ CSV</button>
+    <button class="exp-btn" onclick="shareWhatsApp()">💬 WA</button>
+  </div>
+</div>
+
+<!-- ═══ VIEW: ADMIN ═══ -->
+<div class="view" id="view-admin">
+  <div class="scroll"><div class="pad">
+    <div class="sec-label">Getränke</div>
+    <div id="adm-drinks"></div>
+    <button class="add-drink-btn" onclick="addDrink()">＋ Getränk hinzufügen</button>
+    <button class="save-all-btn" onclick="saveAdmin()">Alle Einstellungen speichern</button>
+    <div class="sec-label">PIN-Schutz Admin</div>
+    <div class="pin-section">
+      <div class="pin-lbl">4-stelliger PIN (leer = kein Schutz)</div>
+      <div class="pin-row">
+        <input class="pin-field" type="password" inputmode="numeric" maxlength="4" id="pin-setting" placeholder="••••">
+        <button class="pin-save" onclick="savePin()">Speichern</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-v="counter"  onclick="goTab('counter')"><span class="ti">🍺</span>Zähler</button>
+  <button class="tab-btn"        data-v="sessions" onclick="goTab('sessions')"><span class="ti">📋</span>Sessions</button>
+  <button class="tab-btn"        data-v="log"      onclick="goTab('log')"><span class="ti">📊</span>Verlauf</button>
+  <button class="tab-btn"        data-v="admin"    onclick="goTab('admin')"><span class="ti">⚙️</span>Admin</button>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="m-reset">
+  <div class="modal"><div class="modal-handle"></div>
+    <h2>Session zurücksetzen?</h2>
+    <p>Alle Zählerstände werden auf 0 gesetzt. Der Verlauf bleibt erhalten.</p>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="cm('m-reset')">Abbrechen</button>
+      <button class="mbtn mbtn-danger" onclick="doReset()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-new-sess">
+  <div class="modal"><div class="modal-handle"></div>
+    <h2>Neue Session</h2>
+    <p>Name für das Event oder den Zeitraum vergeben.</p>
+    <input class="modal-input" type="text" id="new-sess-inp" placeholder="z.B. Sommerfest 2025" maxlength="40">
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="cm('m-new-sess')">Abbrechen</button>
+      <button class="mbtn mbtn-ok" onclick="doNewSess()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-del-sess">
+  <div class="modal"><div class="modal-handle"></div>
+    <h2>Session löschen?</h2>
+    <p id="m-del-sess-txt">Alle Einträge werden gelöscht.</p>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="cm('m-del-sess')">Abbrechen</button>
+      <button class="mbtn mbtn-danger" onclick="doDelSess()">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  DEFAULT DATA
+// ════════════════════════════════════════════════
+const COLORS = ['#d4a017','#3a9dd1','#2ecc71','#e05c5c','#9b59b6','#e67e22','#1abc9c','#e91e8c'];
+
+const DEF_DRINKS = [
+  {id:'bier',    name:'Bier',       emoji:'🍺', color:'#d4a017', enabled:true, goal:0, price:3.00},
+  {id:'wasser',  name:'Wasser',     emoji:'💧', color:'#3a9dd1', enabled:true, goal:0, price:1.00},
+  {id:'soft',    name:'Softdrinks', emoji:'🥤', color:'#2ecc71', enabled:true, goal:0, price:2.00},
+  {id:'schnaps', name:'Schnaps',    emoji:'🥃', color:'#e05c5c', enabled:true, goal:0, price:1.50},
+];
+
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+let S = {
+  drinks: JSON.parse(JSON.stringify(DEF_DRINKS)),
+  sessions: [],
+  curSessId: null,
+  pin: '',
+  theme: 'dark',
+  adminUnlocked: false,
+};
+
+let undoStack = []; // {drinkId, delta}
+let undoTimer = null;
+
+// ════════════════════════════════════════════════
+//  PERSISTENCE
+// ════════════════════════════════════════════════
+function save() {
+  try {
+    const toSave = {...S};
+    delete toSave.adminUnlocked;
+    localStorage.setItem('bwg3', JSON.stringify(toSave));
+  } catch(e){}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('bwg3');
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p.drinks)   S.drinks   = p.drinks;
+      if (p.sessions) S.sessions = p.sessions;
+      if (p.curSessId !== undefined) S.curSessId = p.curSessId;
+      if (p.pin !== undefined) S.pin = p.pin;
+      if (p.theme) S.theme = p.theme;
+    }
+  } catch(e){}
+  if (!S.sessions.length) mkDefaultSess();
+  else if (!S.curSessId || !getSess(S.curSessId)) S.curSessId = S.sessions[0].id;
+  applyTheme();
+}
+
+// ════════════════════════════════════════════════
+//  SESSIONS
+// ════════════════════════════════════════════════
+function mkSess(name) {
+  const counts={}, id='s'+Date.now();
+  S.drinks.forEach(d=>counts[d.id]=0);
+  return {id, name, counts, log:[], createdAt:new Date().toISOString()};
+}
+function mkDefaultSess() {
+  const s = mkSess('Sommerfest 2025');
+  S.sessions.push(s); S.curSessId = s.id; save();
+}
+function getSess(id) { return S.sessions.find(s=>s.id===id); }
+function curSess()   { return getSess(S.curSessId); }
+function totalCount(sess) { return sess ? Object.values(sess.counts).reduce((a,b)=>a+b,0) : 0; }
+function totalPrice(sess) {
+  if (!sess) return 0;
+  return S.drinks.reduce((sum,d)=>sum+(sess.counts[d.id]||0)*(d.price||0),0);
+}
+function fmt(n) { return n.toFixed(2).replace('.',',') + ' €'; }
+
+// ════════════════════════════════════════════════
+//  COUNTER RENDER
+// ════════════════════════════════════════════════
+function renderCards() {
+  const grid = document.getElementById('cards-grid');
+  const sess = curSess();
+  grid.innerHTML = '';
+  S.drinks.filter(d=>d.enabled!==false).forEach(d=>{
+    const cnt   = sess ? (sess.counts[d.id]||0) : 0;
+    const goal  = d.goal||0;
+    const pct   = goal>0 ? Math.min(100,(cnt/goal)*100) : 0;
+    const priceTot = cnt*(d.price||0);
+
+    const el = document.createElement('div');
+    el.className = 'drink-card'+(cnt>0?' active':'');
+    el.style.setProperty('--cc', d.color);
+    el.dataset.id = d.id;
+    el.innerHTML = `
+      <div class="dc-top">
+        <div class="dc-left">
+          <div class="dc-emoji">${d.emoji}</div>
+          <div class="dc-name">${d.name}</div>
+        </div>
+        <div class="dc-right">
+          <div class="dc-count" id="cnt-${d.id}">${cnt}</div>
+          <div class="dc-price-total" id="ptot-${d.id}">${d.price>0&&cnt>0?fmt(priceTot):''}</div>
+        </div>
+      </div>
+      ${goal>0?`<div class="dc-progress"><div class="dc-bar" id="bar-${d.id}" style="width:${pct}%"></div></div><div class="dc-goal-lbl" id="glbl-${d.id}">${cnt} / ${goal}</div>`:''}
+      <div class="dc-btns">
+        <button class="dcb dcb-m" onclick="change('${d.id}',-1)">−</button>
+        <button class="dcb dcb-p" onclick="change('${d.id}', 1)">+</button>
+      </div>`;
+    grid.appendChild(el);
+  });
+  updateBanner();
+}
+
+function change(id, delta) {
+  const sess = curSess();
+  if (!sess) return;
+  if ((sess.counts[id]||0)+delta<0){ toast('Nicht unter 0 möglich'); return; }
+
+  // Push undo
+  undoStack.push({id, delta});
+  showUndo(id, delta);
+
+  sess.counts[id] = (sess.counts[id]||0)+delta;
+  const d = S.drinks.find(x=>x.id===id);
+  const now = new Date();
+  sess.log.unshift({id, name:d.name, emoji:d.emoji, delta, price:d.price||0, time:now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}), ts:now.toISOString()});
+
+  // DOM update
+  const cnt = sess.counts[id];
+  const el = document.getElementById('cnt-'+id);
+  if (el){el.textContent=cnt;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),140);}
+  const pt = document.getElementById('ptot-'+id);
+  if (pt) pt.textContent = d.price>0&&cnt>0?fmt(cnt*d.price):'';
+  const bar = document.getElementById('bar-'+id);
+  if (bar&&d.goal>0) bar.style.width=Math.min(100,(cnt/d.goal)*100)+'%';
+  const gl = document.getElementById('glbl-'+id);
+  if (gl&&d.goal>0) gl.textContent=cnt+' / '+d.goal;
+  const card = document.querySelector(`.drink-card[data-id="${id}"]`);
+  if (card) card.classList.toggle('active',cnt>0);
+
+  updateBanner();
+  if(navigator.vibrate) navigator.vibrate(delta>0?25:[12,8,12]);
+  save();
+}
+
+function showUndo(id, delta) {
+  const d = S.drinks.find(x=>x.id===id);
+  document.getElementById('undo-txt').textContent = `${delta>0?'＋':'－'} ${d.name} ${delta>0?'hinzugefügt':'entfernt'}`;
+  document.getElementById('undo-bar').classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(()=>{document.getElementById('undo-bar').classList.remove('show');},4000);
+}
+
+function doUndo() {
+  const entry = undoStack.pop();
+  if (!entry) return;
+  const sess = curSess();
+  if (!sess) return;
+  sess.counts[entry.id] = Math.max(0,(sess.counts[entry.id]||0)-entry.delta);
+  if (sess.log.length) sess.log.shift();
+  const el = document.getElementById('cnt-'+entry.id);
+  if(el){el.textContent=sess.counts[entry.id];el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),140);}
+  updateBanner();
+  save();
+  if (!undoStack.length) document.getElementById('undo-bar').classList.remove('show');
+  else showUndo(undoStack[undoStack.length-1].id, undoStack[undoStack.length-1].delta);
+  toast('Rückgängig gemacht');
+}
+
+function updateBanner() {
+  const sess = curSess();
+  document.getElementById('hdr-sess').textContent = sess?sess.name:'—';
+  document.getElementById('c-sess-name').textContent = sess?sess.name:'—';
+  document.getElementById('c-total').textContent = totalCount(sess);
+  document.getElementById('c-price').textContent = fmt(totalPrice(sess));
+  if(sess&&sess.log.length) document.getElementById('c-sess-sub').textContent='Seit '+sess.log[sess.log.length-1].time+' Uhr';
+  else document.getElementById('c-sess-sub').textContent='— Noch keine Buchungen';
+  const t=new Date();
+  document.getElementById('hdr-time').textContent=t.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr';
+}
+setInterval(updateBanner,30000);
+
+// ════════════════════════════════════════════════
+//  SESSIONS VIEW
+// ════════════════════════════════════════════════
+function renderSessions() {
+  const list = document.getElementById('sess-list');
+  list.innerHTML='';
+  [...S.sessions].reverse().forEach(sess=>{
+    const cur = sess.id===S.curSessId;
+    const cnt = totalCount(sess);
+    const price = totalPrice(sess);
+    const date = new Date(sess.createdAt).toLocaleDateString('de-DE');
+    const el = document.createElement('div');
+    el.className='sess-item'+(cur?' cur':'');
+    el.innerHTML=`
+      <div style="flex:1">
+        <div class="si-name">${sess.name}</div>
+        <div class="si-meta">${date} · ${sess.log.length} Buchungen</div>
+        <div class="si-actions">
+          ${!cur?`<button class="si-btn" onclick="activateSess('${sess.id}')">Aktivieren</button>`:'<span style="font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;">✓ Aktiv</span>'}
+          <button class="si-btn" onclick="expSessTxt('${sess.id}')">Export</button>
+          ${!cur?`<button class="si-btn del" onclick="openDelSess('${sess.id}')">Löschen</button>`:''}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;padding-left:12px;">
+        <div class="si-count">${cnt}</div>
+        <div class="si-price">${fmt(price)}</div>
+        <div class="si-lbl">Getränke</div>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+function activateSess(id){S.curSessId=id;save();renderCards();renderSessions();renderLog();toast('Session aktiviert');}
+
+let delSessId=null;
+function openDelSess(id){delSessId=id;const s=getSess(id);document.getElementById('m-del-sess-txt').textContent=`„${s.name}" mit ${s.log.length} Einträgen wird gelöscht.`;om('m-del-sess');}
+function doDelSess(){S.sessions=S.sessions.filter(s=>s.id!==delSessId);if(!S.sessions.length)mkDefaultSess();else if(S.curSessId===delSessId)S.curSessId=S.sessions[0].id;save();cm('m-del-sess');renderSessions();renderCards();toast('Session gelöscht');}
+
+function openNewSess(){document.getElementById('new-sess-inp').value='';om('m-new-sess');setTimeout(()=>document.getElementById('new-sess-inp').focus(),350);}
+function doNewSess(){
+  const name=document.getElementById('new-sess-inp').value.trim()||'Neue Session';
+  const s=mkSess(name);S.sessions.push(s);S.curSessId=s.id;
+  save();cm('m-new-sess');renderSessions();renderCards();toast('Session erstellt & aktiviert');
+}
+
+// ════════════════════════════════════════════════
+//  LOG
+// ════════════════════════════════════════════════
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const sess = curSess();
+  const log  = sess?sess.log:[];
+  if(!log.length){list.innerHTML='<div class="log-empty">Keine Einträge</div>';return;}
+  list.innerHTML=log.map(e=>`
+    <div class="log-entry">
+      <div class="le-left">
+        <div class="le-dot ${e.delta>0?'p':'m'}"></div>
+        <div>
+          <div class="le-name">${e.emoji} ${e.name}</div>
+          <div class="le-act">${e.delta>0?'hinzugefügt':'entfernt'}</div>
+        </div>
+      </div>
+      <div class="le-right">
+        <div class="le-time">${e.time}</div>
+        ${e.price>0?`<div class="le-price">${fmt(e.price)}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+//  ADMIN
+// ════════════════════════════════════════════════
+function renderAdmin() {
+  const el = document.getElementById('adm-drinks');
+  el.innerHTML='';
+  const card = document.createElement('div');
+  card.className='admin-card';
+  S.drinks.forEach((d,i)=>{
+    const row=document.createElement('div');
+    row.className='adm-row';
+    row.innerHTML=`
+      <div class="adm-emoji-big">${d.emoji}</div>
+      <div class="adm-fields">
+        <div class="adm-row1">
+          <input class="ainput name" id="an-${d.id}" value="${d.name}" placeholder="Name">
+          <input class="ainput emoji" id="ae-${d.id}" value="${d.emoji}" placeholder="😀">
+        </div>
+        <div class="adm-row2">
+          <span class="alabel">Ziel:</span>
+          <input class="ainput num" id="ag-${d.id}" type="number" value="${d.goal||0}" min="0" max="9999">
+          <span class="alabel">Preis €:</span>
+          <input class="ainput price" id="ap-${d.id}" type="number" value="${(d.price||0).toFixed(2)}" min="0" step="0.10">
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
+        <label class="tog">
+          <input type="checkbox" id="atog-${d.id}" ${d.enabled!==false?'checked':''}>
+          <div class="tog-track"></div><div class="tog-thumb"></div>
+        </label>
+        <button class="adm-del" onclick="deleteDrink('${d.id}')">🗑</button>
+      </div>`;
+    card.appendChild(row);
+  });
+  el.appendChild(card);
+  document.getElementById('pin-setting').value=S.pin||'';
+}
+
+function addDrink() {
+  const id='d'+Date.now();
+  const colorIdx = S.drinks.length % COLORS.length;
+  S.drinks.push({id, name:'Neu', emoji:'🍹', color:COLORS[colorIdx], enabled:true, goal:0, price:2.00});
+  // Add to all sessions
+  S.sessions.forEach(s=>{ if(s.counts[id]===undefined) s.counts[id]=0; });
+  renderAdmin();
+  toast('Getränk hinzugefügt');
+}
+
+function deleteDrink(id) {
+  if(S.drinks.length<=1){toast('Mindestens 1 Getränk nötig');return;}
+  S.drinks=S.drinks.filter(d=>d.id!==id);
+  renderAdmin();
+  toast('Getränk gelöscht');
+}
+
+function saveAdmin() {
+  S.drinks.forEach(d=>{
+    const n=document.getElementById('an-'+d.id);
+    const e=document.getElementById('ae-'+d.id);
+    const g=document.getElementById('ag-'+d.id);
+    const p=document.getElementById('ap-'+d.id);
+    const t=document.getElementById('atog-'+d.id);
+    if(n) d.name=n.value.trim()||d.name;
+    if(e) d.emoji=e.value.trim()||d.emoji;
+    if(g) d.goal=parseInt(g.value)||0;
+    if(p) d.price=parseFloat(p.value)||0;
+    if(t) d.enabled=t.checked;
+  });
+  // Ensure counts exist in current session
+  const sess=curSess();
+  if(sess) S.drinks.forEach(d=>{ if(sess.counts[d.id]===undefined) sess.counts[d.id]=0; });
+  save();
+  renderCards();
+  renderAdmin();
+  toast('Gespeichert ✓');
+}
+
+function savePin() {
+  const v=document.getElementById('pin-setting').value.trim();
+  if(v&&(v.length!==4||!/^\d{4}$/.test(v))){toast('PIN: genau 4 Ziffern');return;}
+  S.pin=v;save();toast(v?'PIN gesetzt':'PIN entfernt');
+}
+
+// ════════════════════════════════════════════════
+//  SHARE
+// ════════════════════════════════════════════════
+function buildSummary() {
+  const sess=curSess();
+  if(!sess) return '';
+  const date=new Date().toLocaleDateString('de-DE');
+  let msg=`🍻 *${sess.name}*\n📅 ${date}\n\n`;
+  S.drinks.forEach(d=>{
+    const cnt=sess.counts[d.id]||0;
+    if(cnt>0){
+      msg+=`${d.emoji} ${d.name}: *${cnt}*`;
+      if(d.price>0) msg+=` (${fmt(cnt*d.price)})`;
+      msg+='\n';
+    }
+  });
+  msg+=`\n📊 Gesamt: *${totalCount(sess)}* Getränke`;
+  const tp=totalPrice(sess);
+  if(tp>0) msg+=`\n💰 Umsatz: *${fmt(tp)}*`;
+  return msg;
+}
+
+function shareWhatsApp() {
+  const txt=buildSummary();
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+
+function shareMessage() {
+  const txt=buildSummary();
+  window.open('sms:&body='+encodeURIComponent(txt));
+}
+
+// ════════════════════════════════════════════════
+//  EXPORT
+// ════════════════════════════════════════════════
+function buildTxt(sid) {
+  const sess=getSess(sid);
+  if(!sess) return '';
+  const date=new Date(sess.createdAt).toLocaleDateString('de-DE');
+  let t=`BAUWAGEN ESTENFELD – Getränkeprotokoll\n`;
+  t+=`Session: ${sess.name} | Datum: ${date}\n`;
+  t+=`${'─'.repeat(40)}\n\nZUSAMMENFASSUNG:\n`;
+  S.drinks.forEach(d=>{
+    const cnt=sess.counts[d.id]||0;
+    t+=`  ${d.emoji}  ${d.name.padEnd(14)} ${String(cnt).padStart(4)}`;
+    if(d.price>0) t+=`  ${fmt(cnt*d.price)}`;
+    t+='\n';
+  });
+  t+=`\n  GESAMT: ${totalCount(sess)} Getränke  |  ${fmt(totalPrice(sess))}\n\n`;
+  t+=`${'─'.repeat(40)}\nVERLAUF:\n`;
+  [...sess.log].reverse().forEach(e=>{t+=`  ${e.time}  ${e.delta>0?'+':'-'}  ${e.name}\n`;});
+  return t;
+}
+
+function dl(content,name,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function expTxt(){dl(buildTxt(S.curSessId),safeName()+'.txt','text/plain');toast('Textdatei exportiert');}
+function expCSV(){
+  const sess=curSess();if(!sess)return;
+  let csv='Zeit,Getränk,Aktion,Preis\n';
+  [...sess.log].reverse().forEach(e=>{csv+=`${e.time},"${e.name}","${e.delta>0?'+':'-'}","${fmt(e.price)}"\n`;});
+  dl(csv,safeName()+'.csv','text/csv');toast('CSV exportiert');
+}
+function expSessTxt(id){dl(buildTxt(id),(getSess(id)?.name||'sess').replace(/\s+/g,'_')+'.txt','text/plain');toast('Export erstellt');}
+function safeName(){return (curSess()?.name||'sess').replace(/\s+/g,'_');}
+
+// ════════════════════════════════════════════════
+//  RESET
+// ════════════════════════════════════════════════
+function openResetModal(){om('m-reset');}
+function doReset(){
+  const sess=curSess();
+  if(sess){S.drinks.forEach(d=>sess.counts[d.id]=0);sess.log=[];}
+  undoStack=[];
+  save();cm('m-reset');renderCards();renderLog();toast('Session zurückgesetzt');
+}
+
+// ════════════════════════════════════════════════
+//  THEME
+// ════════════════════════════════════════════════
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',S.theme);
+  document.getElementById('theme-btn').textContent=S.theme==='dark'?'☀️':'🌙';
+}
+function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';applyTheme();save();}
+
+// ════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════
+function goTab(name) {
+  if(name==='admin'){
+    if(S.pin&&!S.adminUnlocked){
+      pinBuf='';updDots();
+      document.getElementById('pin-lock').classList.add('open');
+      return;
+    }
+    renderAdmin();
+  }
+  if(name==='log') renderLog();
+  if(name==='sessions') renderSessions();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelector(`.tab-btn[data-v="${name}"]`).classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+//  MODALS
+// ════════════════════════════════════════════════
+function om(id){document.getElementById(id).classList.add('open');}
+function cm(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ════════════════════════════════════════════════
+//  PIN LOCK
+// ════════════════════════════════════════════════
+let pinBuf='';
+function pk(k){if(pinBuf.length>=4)return;pinBuf+=k;updDots();if(pinBuf.length===4)setTimeout(chkPin,200);}
+function pd(){pinBuf=pinBuf.slice(0,-1);updDots();}
+function updDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<pinBuf.length);}
+function chkPin(){
+  if(pinBuf===S.pin){
+    S.adminUnlocked=true;
+    document.getElementById('pin-lock').classList.remove('open');
+    document.getElementById('pin-err').textContent='';
+    renderAdmin();
+    goTab('admin');
+  } else {
+    document.getElementById('pin-err').textContent='Falscher PIN';
+    if(navigator.vibrate)navigator.vibrate([50,30,50,30,50]);
+    pinBuf='';updDots();
+    setTimeout(()=>document.getElementById('pin-err').textContent='',2000);
+  }
+}
+
+// ════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════
+let tTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),2300);}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+load();
+renderCards();
+updateBanner();
+</script>
+</body>
+</html>
