@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fest Bestellzettel</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+
+<style>
+:root {
+  --bg:#0a0a0a;
+  --card:#1a1a1a;
+  --accent:#00c853;
+  --danger:#ff5252;
+  --text:#fff;
+}
+
+body {
+  margin:0;
+  font-family:system-ui;
+  background:var(--bg);
+  color:var(--text);
+}
+
+header {
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.container {
+  padding:15px;
+}
+
+.card {
+  background:var(--card);
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:12px;
+}
+
+button {
+  padding:14px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:16px;
+}
+
+.btn {
+  background:var(--accent);
+  color:#000;
+}
+
+.btn-danger {
+  background:var(--danger);
+  color:#fff;
+}
+
+input {
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin:5px 0;
+  width:100%;
+}
+
+.drink {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:8px 0;
+}
+
+.big {
+  font-size:20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>🍻 Bestellzettel</header>
+
+<div class="container">
+
+<div class="card">
+<b>Getränk hinzufügen</b><br>
+<input id="dName" placeholder="Name (z.B. Bier)">
+<input id="dPrice" placeholder="Preis (z.B. 3.5)" type="number">
+<button class="btn" onclick="addDrink()">Hinzufügen</button>
+</div>
+
+<div id="drinks"></div>
+
+<div class="card big">
+Gesamt: <span id="total">0</span> €
+</div>
+
+<div class="card">
+<button class="btn" onclick="repeatRound()">+ gleiche Runde</button>
+<button class="btn" onclick="newRound()">Neue Runde</button>
+</div>
+
+<div class="card">
+<button class="btn" onclick="exportData()">Export</button>
+<button class="btn-danger" onclick="resetAll()">Reset</button>
+</div>
+
+</div>
+
+<script>
+
+let app = JSON.parse(localStorage.getItem("fest")) || {
+  drinks: [],
+  rounds: []
+};
+
+function save() {
+  localStorage.setItem("fest", JSON.stringify(app));
+  render();
+}
+
+function addDrink() {
+  const name = document.getElementById("dName").value;
+  const price = parseFloat(document.getElementById("dPrice").value);
+
+  if(!name || !price) return;
+
+  app.drinks.push({
+    name,
+    price,
+    count:0,
+    active:true
+  });
+
+  document.getElementById("dName").value="";
+  document.getElementById("dPrice").value="";
+  save();
+}
+
+function addCount(i) {
+  app.drinks[i].count++;
+  save();
+}
+
+function toggle(i) {
+  app.drinks[i].active = !app.drinks[i].active;
+  save();
+}
+
+function render() {
+  const div = document.getElementById("drinks");
+  div.innerHTML="";
+
+  let total = 0;
+
+  app.drinks.forEach((d,i)=>{
+    if(!d.active) return;
+
+    total += d.count * d.price;
+
+    div.innerHTML += `
+    <div class="card drink">
+      <div>
+        <b>${d.name}</b><br>
+        ${d.count} x ${d.price.toFixed(2)} €
+      </div>
+      <div>
+        <button class="btn" onclick="addCount(${i})">+1</button>
+        <button class="btn-danger" onclick="toggle(${i})">X</button>
+      </div>
+    </div>
+    `;
+  });
+
+  document.getElementById("total").innerText = total.toFixed(2);
+}
+
+function newRound() {
+  app.rounds.push(JSON.parse(JSON.stringify(app.drinks)));
+
+  app.drinks.forEach(d => d.count = 0);
+  save();
+}
+
+function repeatRound() {
+  if(app.rounds.length === 0) return;
+
+  let last = app.rounds[app.rounds.length-1];
+
+  last.forEach((d,i)=>{
+    app.drinks[i].count += d.count;
+  });
+
+  save();
+}
+
+function exportData() {
+  let text = "🍻 Bestellungen\n\n";
+
+  app.drinks.forEach(d=>{
+    if(d.count > 0){
+      text += `${d.name}: ${d.count} x ${d.price}€\n`;
+    }
+  });
+
+  text += `\nGesamt: ${document.getElementById("total").innerText} €`;
+
+  const url = "https://wa.me/?text=" + encodeURIComponent(text);
+  window.open(url, "_blank");
+}
+
+function resetAll() {
+  if(confirm("Alles löschen?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+render();
+
+// PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+
+</script>
+
+</body>
+</html>
